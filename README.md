@@ -104,7 +104,7 @@ $ mkdir build
 $ cd build
 $ cmake -DPACKAGE_OUTPUT_FILE_PREFIX=../interop/dist ../interop
 $ cmake --build .
-$ cmake --build . --target package_wheel. # build python wheel package
+$ cmake --build . --target package_wheel  # build python wheel package
 ~~~~~~~~~~~~~
 
 Building with InterOp
