@@ -102,8 +102,9 @@ Then upgrade numpy and try again.
 $ git clone https://github.com/Illumina/interop.git
 $ mkdir build
 $ cd build
-$ cmake ../interop
+$ cmake -DPACKAGE_OUTPUT_FILE_PREFIX=../interop/dist ../interop
 $ cmake --build .
+$ cmake --build . --target package_wheel. # build python wheel package
 ~~~~~~~~~~~~~
 
 Building with InterOp
