@@ -2,33 +2,26 @@ name: Python Wheels
 
 env:
   MACOSX_DEPLOYMENT_TARGET: 10.9
-  DOCKER_IMAGE: quay.io/pypa/manylinux2014_x86_64
+  DOCKER_IMAGE: quay.io/pypa/manylinux2014_aarch64
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "aarch64" ]
     tags: [ "*" ]
   pull_request:
     branches: [ "*" ]
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: "ubuntu-aarch64"
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-2019, macOS-13]
-        pyver: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        pyver: ['3.9', '3.10', '3.11', '3.12', '3.13']
 
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - uses: actions/setup-python@v4
-        if: matrix.os != 'ubuntu-latest'
-        with:
-          python-version: ${{matrix.pyver}}
-        id: cpver
 
       - name: Setup Git name
         run: |
@@ -36,92 +29,27 @@ jobs:
           git config user.email "<>"
           git --version
 
-      - name: Package Python 3.8 and earlier
-        if: matrix.os == 'ubuntu-latest' && matrix.pyver != '3.9' && matrix.pyver != '3.10' && matrix.pyver != '3.11' && matrix.pyver != '3.12' && matrix.pyver != '3.13'
-        run: docker run --rm -v ${{github.workspace}}/:/io ezralanglois/interop sh /io/tools/package.sh /io /io/dist travis OFF
-
       - name: Package Python 3.9
-        if: matrix.os == 'ubuntu-latest' && matrix.pyver == '3.9'
+        if: matrix.pyver == '3.9'
         run: docker run --rm -v ${{github.workspace}}/:/io $DOCKER_IMAGE sh /io/tools/package.sh /io /io/dist travis OFF Release cp39-cp39
 
       - name: Package Python 3.10
-        if: matrix.os == 'ubuntu-latest' && matrix.pyver == '3.10'
+        if: matrix.pyver == '3.10'
         run: docker run --rm -v ${{github.workspace}}/:/io $DOCKER_IMAGE sh /io/tools/package.sh /io /io/dist travis OFF Release cp310-cp310
 
       - name: Package Python 3.11
-        if: matrix.os == 'ubuntu-latest' && matrix.pyver == '3.11'
+        if: matrix.pyver == '3.11'
         run: docker run --rm -v ${{github.workspace}}/:/io $DOCKER_IMAGE sh /io/tools/package.sh /io /io/dist travis OFF Release cp311-cp311
 
       - name: Package Python 3.12
-        if: matrix.os == 'ubuntu-latest' && matrix.pyver == '3.12'
+        if: matrix.pyver == '3.12'
         run: docker run --rm -v ${{github.workspace}}/:/io $DOCKER_IMAGE sh /io/tools/package.sh /io /io/dist travis OFF Release cp312-cp312
 
       - name: Package Python 3.13
-        if: matrix.os == 'ubuntu-latest' && matrix.pyver == '3.13'
+        if: matrix.pyver == '3.13'
         run: docker run --rm -v ${{github.workspace}}/:/io $DOCKER_IMAGE sh /io/tools/package.sh /io /io/dist travis OFF Release cp313-cp313
-
-      - name: Windows Package Python
-        if: matrix.os == 'windows-2019'
-        shell: cmd
-        run: |
-          python -m pip install --upgrade pip setuptools wheel numpy
-          tools\package.bat Release "Visual Studio 16 2019" package_wheel "-DENABLE_APPS=OFF -DENABLE_EXAMPLES=OFF -DENABLE_CSHARP=OFF -DPython_EXECUTABLE=${{ steps.cpver.outputs.python-path }}" -DENABLE_PORTABLE=ON -A x64
-
-      - name: Mac OSX Package Python
-        if: matrix.os == 'macOS-latest' || matrix.os == 'macOS-13'
-        run: bash ./tools/package.sh ${{github.workspace}} ${{github.workspace}}/dist travis OFF Release ${{matrix.pyver}}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: artifact_${{matrix.pyver}}_${{matrix.os}}
+          name: artifact_${{matrix.pyver}}_aarch64
           path: dist/*.whl
-
-  publishtest:
-    needs: [build]
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags') != true
-
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
-      - name: Print dist
-        run: ls -lR dist
-      - name: Test Publish a Python distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          packages_dir: ./dist
-          repository_url: https://test.pypi.org/legacy/
-          skip_existing: true
-          verbose: true
-
-  publish:
-    needs: [build]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
-      - name: Publish a Python distribution to PyPI
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          packages_dir: ./dist
-          skip_existing: true
-
-
-
-      #-name: Deploy documentation to GitHub Pages
-      #  uses: JamesIves/github-pages-deploy-action@v4.3.3
-      #    with:
-      #      branch: gh-pages
-      #      folder: site
-      #      ssh-key: ${{ secrets.DEPLOY_KEY }}
