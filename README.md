@@ -1,6 +1,11 @@
 A fork of the Illumina InterOp library. Build aarch64 python packages.
 
 
+### How to build
+```
+docker run --rm -it -v /path/to/interop/:/io quay.io/pypa/manylinux2014_aarch64 sh /io/tools/package_linux.sh /io /io/dist  local OFF Release cp312-cp312
+```
+
 
 Quick Start
 ===========
