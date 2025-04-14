@@ -6,11 +6,7 @@ env:
 
 on:
   push:
-    branches: [ "aarch64" ]
     tags: [ "*" ]
-  pull_request:
-    branches: [ "*" ]
-
 jobs:
   build:
     runs-on: ["self-hosted", "ARM64"]
